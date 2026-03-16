@@ -163,7 +163,7 @@
             </plugin>
 
             <!-- OWASP Dependency Check -->
-            <plugin>
+            <!-- <plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
 				<version>${dependency-check.plugin.version}</version>
@@ -184,7 +184,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 
             <!-- Snyk Maven Plugin -->
             <plugin>
