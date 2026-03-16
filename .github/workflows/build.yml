@@ -94,8 +94,10 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      - name: Snyk Security Dependency Scan
-        run: mvn -B io.snyk:snyk-maven-plugin:test -X -e
+      - name: Snyk Scan
+        uses: snyk/actions@master
+        with:
+          command: test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
