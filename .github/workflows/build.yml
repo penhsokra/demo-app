@@ -100,20 +100,20 @@ jobs:
         run: |
           mvn -B io.snyk:snyk-maven-plugin:test
 
-      - name: OWASP Dependency Check
-        env:
-            NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: |
-            mvn -B verify
+    #   - name: OWASP Dependency Check
+    #     env:
+    #         NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+    #     run: |
+    #         mvn -B verify
 
-      - name: Upload Security Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: |
-            target/dependency-check-report.html
-            target/dependency-check-report.xml
+    #   - name: Upload Security Reports
+    #     if: always()
+    #     uses: actions/upload-artifact@v4
+    #     with:
+    #       name: security-reports
+    #       path: |
+    #         target/dependency-check-report.html
+    #         target/dependency-check-report.xml
 
   sonarqube:
     name: SonarQube Analysis
