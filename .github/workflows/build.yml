@@ -101,10 +101,10 @@ jobs:
           mvn -B io.snyk:snyk-maven-plugin:test
 
       - name: OWASP Dependency Check
-        continue-on-error: true
+        env:
+            NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          mvn -B org.owasp:dependency-check-maven:check \
-            -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+            mvn -B verify
 
       - name: Upload Security Reports
         if: always()
