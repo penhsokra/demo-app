@@ -1,4 +1,4 @@
-name: Build
+name: DevSecOps Pipeline
 
 on:
   push:
@@ -6,41 +6,49 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build and SonarQube Scan
+  security-scan:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+
+      - name: Checkout Source
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Setup JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
-      - name: Cache SonarQube packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-
-      - name: Cache Maven packages
+      - name: Cache Maven Dependencies
         uses: actions/cache@v3
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-maven
+          key: maven-cache
 
-      - name: Build and SonarQube Scan
+      - name: Build + Test + Static Analysis
+        run: |
+          mvn clean verify \
+          jacoco:report \
+          checkstyle:checkstyle \
+          pmd:pmd \
+          spotbugs:spotbugs \
+          org.owasp:dependency-check-maven:check
+
+      - name: Snyk Security Scan
+        uses: snyk/actions/maven@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          mvn -B clean verify sonar:sonar \
+          mvn sonar:sonar \
           -Dsonar.projectKey=demo-app \
-          -Dsonar.projectName="demo-app" \
           -Dsonar.host.url=$SONAR_HOST_URL \
           -Dsonar.login=$SONAR_TOKEN
