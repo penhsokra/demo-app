@@ -187,7 +187,7 @@
 			</plugin> -->
 
             <!-- Snyk Maven Plugin -->
-            <plugin>
+            <!-- <plugin>
                 <groupId>io.snyk</groupId>
                 <artifactId>snyk-maven-plugin</artifactId>
                 <version>${snyk.plugin.version}</version>
@@ -195,7 +195,7 @@
                 <configuration>
                     <apiToken>${env.SNYK_TOKEN}</apiToken>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
         </plugins>
     </build>

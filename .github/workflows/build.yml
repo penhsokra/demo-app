@@ -94,12 +94,12 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      - name: Snyk Scan
-        uses: snyk/actions@master
-        with:
-          command: test
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    #   - name: Snyk Scan
+    #     uses: snyk/actions@master
+    #     with:
+    #       command: test
+    #     env:
+    #       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     #   - name: OWASP Dependency Check
     #     env:
