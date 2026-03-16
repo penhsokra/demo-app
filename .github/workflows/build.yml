@@ -94,11 +94,10 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
-      - name: Snyk Scan via Maven Plugin
+      - name: Snyk Security Dependency Scan
+        run: mvn -B io.snyk:snyk-maven-plugin:test -X -e
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          mvn -B io.snyk:snyk-maven-plugin:test
 
     #   - name: OWASP Dependency Check
     #     env:
