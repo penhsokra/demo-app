@@ -46,37 +46,37 @@ jobs:
             target/surefire-reports/*.xml
             target/failsafe-reports/*.xml
 
-#   quality:
-#     name: Quality Analysis
-#     runs-on: ubuntu-latest
-#     needs: test
+  quality:
+    name: Quality Analysis
+    runs-on: ubuntu-latest
+    needs: test
 
-#     steps:
-#       - name: Checkout Source
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
 
-#       - name: Setup Java
-#         uses: actions/setup-java@v4
-#         with:
-#           distribution: temurin
-#           java-version: ${{ env.JAVA_VERSION }}
-#           cache: maven
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
 
-#       - name: Run Quality Reports
-#         run: |
-#           mvn -B verify jacoco:report checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
+      - name: Run Quality Reports
+        run: |
+          mvn -B verify jacoco:report checkstyle:checkstyle pmd:pmd spotbugs:spotbugs
 
-#       - name: Upload Quality Reports
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: quality-reports
-#           path: |
-#             target/checkstyle-result.xml
-#             target/pmd.xml
-#             target/cpd.xml
-#             target/spotbugsXml.xml
-#             target/site/**
+      - name: Upload Quality Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: |
+            target/checkstyle-result.xml
+            target/pmd.xml
+            target/cpd.xml
+            target/spotbugsXml.xml
+            target/site/**
 
   security:
     name: Security Scans
