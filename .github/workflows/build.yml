@@ -29,16 +29,23 @@ jobs:
           path: ~/.m2
           key: maven-cache
 
-      - name: Build + Test + Static Analysis
+      - name: Build + Test
         run: |
-          mvn clean verify \
-          jacoco:report \
+          mvn clean verify
+
+      - name: Static Analysis
+        run: |
+          mvn jacoco:report \
           checkstyle:checkstyle \
           pmd:pmd \
-          spotbugs:spotbugs \
-          org.owasp:dependency-check-maven:check
+          spotbugs:spotbugs
 
-      - name: Snyk Security Scan
+      - name: OWASP Dependency Security Scan
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+          -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+
+      - name: Snyk Security Dependency Scan
         uses: snyk/actions/maven@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
