@@ -84,22 +84,23 @@ jobs:
     needs: quality
 
     steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
+    - name: Checkout Source
+      uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-      - name: Snyk Scan
-        uses: snyk/actions@master
-        with:
-          command: test
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    - name: Install Snyk CLI
+      uses: snyk/actions/setup@master
+      with:
+        version: 'latest'
+
+    - name: Run Snyk Test
+      run: snyk test
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     #   - name: OWASP Dependency Check
     #     env:
