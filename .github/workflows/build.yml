@@ -93,14 +93,13 @@ jobs:
         node-version: '20'
 
     - name: Install Snyk CLI
-      uses: snyk/actions/setup@master
-      with:
-        version: 'latest'
+      run: npm install -g snyk
 
-    - name: Run Snyk Test
-      run: snyk test
+    - name: Run Snyk Scan
+      run: snyk test --all-projects -d
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        HOME: ${{ github.workspace }}
 
     #   - name: OWASP Dependency Check
     #     env:
