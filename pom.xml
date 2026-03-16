@@ -139,17 +139,9 @@
 
 <!-- OWASP Dependency Check -->
 <plugin>
- <groupId>org.owasp</groupId>
- <artifactId>dependency-check-maven</artifactId>
- <version>9.0.9</version>
- <executions>
-  <execution>
-   <phase>verify</phase>
-   <goals>
-    <goal>check</goal>
-   </goals>
-  </execution>
- </executions>
+  <groupId>org.owasp</groupId>
+  <artifactId>dependency-check-maven</artifactId>
+  <version>9.0.9</version>
 </plugin>
 
 </plugins>
