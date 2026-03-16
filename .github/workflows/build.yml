@@ -40,15 +40,15 @@ jobs:
           pmd:pmd \
           spotbugs:spotbugs
 
-      - name: OWASP Dependency Security Scan
-        run: |
-          mvn org.owasp:dependency-check-maven:check \
-          -DnvdApiKey=${{ secrets.NVD_API_KEY }}
-
       - name: Snyk Security Dependency Scan
         uses: snyk/actions/maven@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: OWASP Dependency Security Scan
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+          -DnvdApiKey=${{ secrets.NVD_API_KEY }}
 
       - name: SonarQube Scan
         env:
