@@ -31,12 +31,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3️⃣ Maven build + tests + coverage + static analysis
-      - name: Maven Build, Test & Quality Reports
+      # 3️⃣ Maven Build & Tests (JUnit)
+      - name: Maven Build & Tests
         run: |
-          mvn clean verify jacoco:report checkstyle:checkstyle pmd:pmd spotbugs:spotbugs site
+          mvn clean verify
 
-      # 4️⃣ Upload JUnit reports (XML + HTML)
+      # 4️⃣ Upload JUnit Reports (XML + HTML)
       - name: Upload JUnit Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,7 +46,12 @@ jobs:
             target/surefire-reports/*.xml
             target/site/surefire-report.html
 
-      # 5️⃣ Upload Quality Reports (XML + HTML)
+      # 5️⃣ Coverage & Static Analysis
+      - name: Maven Coverage & Static Analysis
+        run: |
+          mvn jacoco:report checkstyle:checkstyle pmd:pmd spotbugs:spotbugs site
+
+      # 6️⃣ Upload Quality Reports (XML + HTML)
       - name: Upload Quality Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,19 +67,19 @@ jobs:
             target/site/spotbugs.html
             target/site/jacoco/index.html
 
-      # 6️⃣ Install Snyk CLI
+      # 7️⃣ Install Snyk CLI
       - name: Install Snyk
         uses: snyk/actions/setup@master
         with:
           snyk-version: 'latest'
 
-      # 7️⃣ Run Snyk vulnerability scan (JSON + HTML)
+      # 8️⃣ Run Snyk vulnerability scan (JSON + HTML)
       - name: Run Snyk Scan
         run: |
           snyk test --all-projects --json > snyk-report.json
           snyk test --all-projects --html > snyk-report.html
 
-      # 8️⃣ Upload Security Reports (JSON + HTML)
+      # 9️⃣ Upload Security Reports (JSON + HTML)
       - name: Upload Security Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -84,7 +89,7 @@ jobs:
             snyk-report.json
             snyk-report.html
 
-      # 9️⃣ SonarQube Scan (Aggregates all reports)
+      # 🔟 SonarQube Scan (Aggregates all reports)
       - name: SonarQube Scan
         uses: sonarsource/sonarcloud-github-action@master
         with:
