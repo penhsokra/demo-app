@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # 1️⃣ JOB: UNIT TESTS & COVERAGE
-  unit-tests:
+  # 1️⃣ BUILD JOB: Compiles code and runs tests
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,41 +18,40 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run Tests & JaCoCo
+      - name: Compile & Test
         run: mvn clean test jacoco:report
 
-      - name: Share Test & Coverage Assets
+      - name: Upload Build Assets
         uses: actions/upload-artifact@v4
         with:
-          name: test-assets
+          name: build-assets
           path: |
-            target/classes
+            target/classes/
             target/site/jacoco/jacoco.xml
-            target/surefire-reports/
             pom.xml
 
-  # 2️⃣ JOB: BUGS STATIC ANALYSIS
-  spotbugs-analysis:
-    needs: unit-tests
+  # 2️⃣ JOB: SPOTBUGS (Runs in parallel with Dependency Scan)
+  spotbugs:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: test-assets
+          name: build-assets
       
       - name: Run SpotBugs
         run: mvn spotbugs:check -DfailOnError=false
 
-      - name: Share SpotBugs Report
+      - name: Upload SpotBugs Report
         uses: actions/upload-artifact@v4
         with:
-          name: spotbugs-assets
+          name: spotbugs-report
           path: target/spotbugsXml.xml
 
-  # 3️⃣ JOB: DEPENDENCY CHECK SCAN
-  dependency-scan:
-    needs: unit-tests
+  # 3️⃣ JOB: DEPENDENCY CHECK (Runs in parallel with SpotBugs)
+  dependency-check:
+    needs: build
     runs-on: ubuntu-latest
     env:
       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
@@ -64,17 +63,17 @@ jobs:
             -DnvdApiKey=${{ env.NVD_API_KEY }} \
             -Dformats=JSON,HTML
 
-      - name: Share Dependency Reports
+      - name: Upload Dependency Reports
         uses: actions/upload-artifact@v4
         with:
-          name: dependency-assets
+          name: dependency-reports
           path: |
             target/dependency-check-report.json
             target/dependency-check-report.html
 
-  # 4️⃣ JOB: SONARQUBE ANALYSIS
+  # 4️⃣ JOB: SONARQUBE ANALYSIS (Waits for all scans to finish)
   sonarqube:
-    needs: [unit-tests, spotbugs-analysis, dependency-scan]
+    needs: [build, spotbugs, dependency-check]
     runs-on: ubuntu-latest
     env:
       SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -84,16 +83,16 @@ jobs:
         with:
           fetch-depth: 0
       
-      # Download everything from previous jobs
+      # Download all artifacts for the final scan
       - uses: actions/download-artifact@v4
         with:
-          name: test-assets
+          name: build-assets
       - uses: actions/download-artifact@v4
         with:
-          name: spotbugs-assets
+          name: spotbugs-report
       - uses: actions/download-artifact@v4
         with:
-          name: dependency-assets
+          name: dependency-reports
 
       - name: SonarQube Analysis
         run: |
