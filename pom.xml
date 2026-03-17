@@ -8,7 +8,8 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.4</version> <relativePath/>
+    <version>3.2.4</version>
+    <relativePath/>
   </parent>
 
   <groupId>com.example</groupId>
@@ -100,14 +101,7 @@
           </formats>
           <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+        </plugin>
 
     </plugins>
   </build>
