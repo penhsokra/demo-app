@@ -6,56 +6,95 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-scan:
+  # 1️⃣ JOB: UNIT TESTS & COVERAGE
+  unit-tests:
     runs-on: ubuntu-latest
-    
-    env:
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-
     steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Java 17
+      - uses: actions/checkout@v4
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
 
-      # 1. Build and Run Unit Tests (Generates JaCoCo reports)
-      - name: Unit Tests & Coverage
+      - name: Run Tests & JaCoCo
         run: mvn clean test jacoco:report
 
-      # 2. Run SpotBugs (Static Analysis)
-      - name: SpotBugs Static Analysis
-        run: mvn spotbugs:check -DfailOnError=false
-
-      # 3. Run OWASP Dependency Check (Vulnerability Scan)
-      # - name: Dependency Check Scan
-      #   run: |
-      #     mvn org.owasp:dependency-check-maven:check \
-      #       -DnvdApiKey=${{ env.NVD_API_KEY }} \
-      #       -Dformats=JSON,HTML
-
-      # 4. Upload Reports to GitHub Artifacts (All Paths Included)
-      - name: Upload Security & Quality Reports
-        if: always()
+      - name: Share Test & Coverage Assets
         uses: actions/upload-artifact@v4
         with:
-          name: devsecops-analysis-reports
+          name: test-assets
           path: |
-            target/site/jacoco/
-            target/spotbugsXml.xml
+            target/classes
+            target/site/jacoco/jacoco.xml
+            target/surefire-reports/
+            pom.xml
+
+  # 2️⃣ JOB: BUGS STATIC ANALYSIS
+  spotbugs-analysis:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-assets
+      
+      - name: Run SpotBugs
+        run: mvn spotbugs:check -DfailOnError=false
+
+      - name: Share SpotBugs Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-assets
+          path: target/spotbugsXml.xml
+
+  # 3️⃣ JOB: DEPENDENCY CHECK SCAN
+  dependency-scan:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+            -DnvdApiKey=${{ env.NVD_API_KEY }} \
+            -Dformats=JSON,HTML
+
+      - name: Share Dependency Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-assets
+          path: |
             target/dependency-check-report.json
             target/dependency-check-report.html
-            target/surefire-reports/
 
-      # 5. Upload all results to SonarQube
+  # 4️⃣ JOB: SONARQUBE ANALYSIS
+  sonarqube:
+    needs: [unit-tests, spotbugs-analysis, dependency-scan]
+    runs-on: ubuntu-latest
+    env:
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      # Download everything from previous jobs
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-assets
+      - uses: actions/download-artifact@v4
+        with:
+          name: spotbugs-assets
+      - uses: actions/download-artifact@v4
+        with:
+          name: dependency-assets
+
       - name: SonarQube Analysis
         run: |
           mvn sonar:sonar \
