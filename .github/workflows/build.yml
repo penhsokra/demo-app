@@ -2,11 +2,9 @@ name: DevSecOps Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +14,7 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
+
   test:
     name: Build and Test
     runs-on: ubuntu-latest
@@ -34,8 +33,7 @@ jobs:
           cache: maven
 
       - name: Build + Test
-        run: |
-          mvn -B clean test
+        run: mvn -B clean test
 
       - name: Upload JUnit Reports
         if: always()
@@ -45,6 +43,7 @@ jobs:
           path: |
             target/surefire-reports/*.xml
             target/failsafe-reports/*.xml
+
 
   quality:
     name: Quality Analysis
@@ -78,53 +77,49 @@ jobs:
             target/spotbugsXml.xml
             target/site/**
 
+
   security:
     name: Security Scans
     runs-on: ubuntu-latest
     needs: quality
 
     steps:
-    - name: Checkout Source
-      uses: actions/checkout@v4
+      - name: Checkout Source
+        uses: actions/checkout@v4
 
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: ${{ env.JAVA_VERSION }}
-        cache: maven
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Make mvnw executable
-      run: chmod +x mvnw
+      # Snyk vulnerability scan
+      - name: Run Snyk Scan
+        uses: snyk/actions/maven@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-    - name: Install Snyk CLI
-      run: npm install -g snyk
+      # OWASP Dependency Check
+      - name: OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check
 
-    - name: Run Snyk Scan
-      run: snyk test --all-projects -d
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        HOME: ${{ github.workspace }}
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            target/dependency-check-report.html
+            target/dependency-check-report.xml
 
-    #   - name: OWASP Dependency Check
-    #     env:
-    #         NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-    #     run: |
-    #         mvn -B verify
-
-    #   - name: Upload Security Reports
-    #     if: always()
-    #     uses: actions/upload-artifact@v4
-    #     with:
-    #       name: security-reports
-    #       path: |
-    #         target/dependency-check-report.html
-    #         target/dependency-check-report.xml
 
   sonarqube:
     name: SonarQube Analysis
@@ -149,15 +144,10 @@ jobs:
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
-          restore-keys: |
-            ${{ runner.os }}-sonar
 
-      - name: SonarQube Scan + Quality Gate
+      - name: SonarQube Scan
         run: |
-            mvn clean verify sonar:sonar \
-            -Dsonar.projectKey=demo-app \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN            
-        env:
-            SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          mvn clean verify sonar:sonar \
+          -Dsonar.projectKey=demo-app \
+          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
