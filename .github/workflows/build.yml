@@ -1,21 +1,21 @@
-name: DevSecOps Optimized (Sequential)
+name: DevSecOps Optimized
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# GLOBAL ENVIRONMENT VARIABLES
+# GLOBAL ENVIRONMENT VARIABLES (Moved from Secrets)
 env:
   SONAR_HOST_URL: ${{secrets.SONAR_HOST_URL}}
-  SONAR_PROJECT_KEY: "demo-app"
-  # WARNING: Moving tokens to plain text is less secure than Secrets
   SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+  SONAR_PROJECT_KEY: "demo-app"
   NVD_API_KEY: ${{secrets.NVD_API_KEY}}
 
 jobs:
-  # 1. UNIT TESTS & COVERAGE
-  unit-tests:
+  # 1. BUILD JOB
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,77 +26,82 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run Tests & JaCoCo
-        run: mvn clean test jacoco:report
+      - name: Maven Build
+        run: mvn clean compile test jacoco:report
 
-      - name: Share Test Assets
+      - name: Share Build Assets
         uses: actions/upload-artifact@v4
         with:
-          name: test-assets
+          name: build-assets
           path: |
             target/classes
             target/site/jacoco/jacoco.xml
             pom.xml
 
-  # 2. BUGS STATIC ANALYSIS
-  spotbugs-analysis:
-    needs: unit-tests
+  # 2. QUALITY JOB
+  quality-analysis:
+    name: Quality Analysis
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: test-assets
-      
+          name: build-assets
+
       - name: Run SpotBugs
         run: mvn spotbugs:check -DfailOnError=false
 
-      - name: Share SpotBugs Report
+      - name: Share Quality Report
         uses: actions/upload-artifact@v4
         with:
-          name: spotbugs-assets
+          name: quality-report
           path: target/spotbugsXml.xml
 
-  # 3. DEPENDENCY CHECK
-  dependency-scan:
-    needs: spotbugs-analysis
+  # 3. SECURITY JOB (Your OWASP Path)
+  security-scans:
+    name: Security Scans
+    needs: quality-analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Run OWASP Dependency Check
         run: |
           mvn org.owasp:dependency-check-maven:check \
             -DnvdApiKey=${{ env.NVD_API_KEY }} \
             -Dformats=JSON,HTML
 
-      - name: Share Dependency Reports
+      - name: Share Security Reports
         uses: actions/upload-artifact@v4
         with:
-          name: dependency-assets
+          name: security-reports
           path: |
             target/dependency-check-report.json
             target/dependency-check-report.html
 
-  # 4. SONARQUBE ANALYSIS
-  sonarqube:
-    needs: dependency-scan
+  # 4. SONARQUBE JOB
+  sonarqube-analysis:
+    name: SonarQube Analysis
+    needs: security-scans
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
+      # Download ALL reports from previous steps
       - uses: actions/download-artifact@v4
         with:
-          name: test-assets
+          name: build-assets
       - uses: actions/download-artifact@v4
         with:
-          name: spotbugs-assets
+          name: quality-report
       - uses: actions/download-artifact@v4
         with:
-          name: dependency-assets
+          name: security-reports
 
-      - name: SonarQube Analysis
+      - name: SonarQube Scan
         run: |
           mvn sonar:sonar \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
