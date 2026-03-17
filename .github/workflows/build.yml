@@ -104,6 +104,10 @@ jobs:
     - name: Authenticate Snyk
       run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
+    # IMPORTANT STEP
+    - name: Resolve Maven Dependencies
+      run: mvn -B dependency:resolve
+
     - name: Run Snyk Scan
       run: snyk test --all-projects
       continue-on-error: true
