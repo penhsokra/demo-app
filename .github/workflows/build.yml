@@ -104,6 +104,9 @@ jobs:
     - name: Authenticate Snyk
       run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
+    - name: Make mvnw executable
+      run: chmod +x mvnw
+
     # IMPORTANT STEP
     - name: Resolve Maven Dependencies
       run: mvn -B dependency:resolve
