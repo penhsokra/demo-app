@@ -66,6 +66,7 @@ jobs:
             target/site/checkstyle.html
             target/site/pmd.html
             target/site/spotbugs.html
+            target/site/jacoco/index.html
             target/site/**
 
 
@@ -78,8 +79,6 @@ jobs:
       # 8️⃣ Run Snyk vulnerability scan (JSON + HTML)
       - name: Run Snyk Scan
         run: |
-          mkdir -p ~/.m2 && chmod -R 777 ~/.m2
-
           snyk test --all-projects --json > snyk-report.json || true  
           snyk test --all-projects --html > snyk-report.html || true
 
