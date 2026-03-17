@@ -1,13 +1,21 @@
-name: DevSecOps Optimized
+name: DevSecOps Optimized (Sequential)
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+# GLOBAL ENVIRONMENT VARIABLES
+env:
+  SONAR_HOST_URL: ${{secrets.SONAR_HOST_URL}}
+  SONAR_PROJECT_KEY: "demo-app"
+  # WARNING: Moving tokens to plain text is less secure than Secrets
+  SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+  NVD_API_KEY: ${{secrets.NVD_API_KEY}}
+
 jobs:
-  # 1. BUILD JOB: Compiles code and prepares artifacts
-  build:
+  # 1. UNIT TESTS & COVERAGE
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,43 +26,41 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Compile & Test
+      - name: Run Tests & JaCoCo
         run: mvn clean test jacoco:report
 
-      - name: Upload Build Assets
+      - name: Share Test Assets
         uses: actions/upload-artifact@v4
         with:
-          name: build-assets
+          name: test-assets
           path: |
-            target/classes/
+            target/classes
             target/site/jacoco/jacoco.xml
             pom.xml
 
-  # 2. SPOTBUGS JOB: Runs in parallel with Dependency Scan
-  spotbugs:
-    needs: build
+  # 2. BUGS STATIC ANALYSIS
+  spotbugs-analysis:
+    needs: unit-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: build-assets
+          name: test-assets
       
       - name: Run SpotBugs
         run: mvn spotbugs:check -DfailOnError=false
 
-      - name: Upload SpotBugs Report
+      - name: Share SpotBugs Report
         uses: actions/upload-artifact@v4
         with:
-          name: spotbugs-report
+          name: spotbugs-assets
           path: target/spotbugsXml.xml
 
-  # 3. DEPENDENCY CHECK JOB: Runs in parallel with SpotBugs
-  dependency-check:
-    needs: build
+  # 3. DEPENDENCY CHECK
+  dependency-scan:
+    needs: spotbugs-analysis
     runs-on: ubuntu-latest
-    env:
-      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Run OWASP Dependency Check
@@ -63,21 +69,18 @@ jobs:
             -DnvdApiKey=${{ env.NVD_API_KEY }} \
             -Dformats=JSON,HTML
 
-      - name: Upload Dependency Reports
+      - name: Share Dependency Reports
         uses: actions/upload-artifact@v4
         with:
-          name: dependency-reports
+          name: dependency-assets
           path: |
             target/dependency-check-report.json
             target/dependency-check-report.html
 
-  # 4. SONARQUBE ANALYSIS: Consolidation Job
+  # 4. SONARQUBE ANALYSIS
   sonarqube:
-    needs: [build, spotbugs, dependency-check]
+    needs: dependency-scan
     runs-on: ubuntu-latest
-    env:
-      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -85,20 +88,20 @@ jobs:
       
       - uses: actions/download-artifact@v4
         with:
-          name: build-assets
+          name: test-assets
       - uses: actions/download-artifact@v4
         with:
-          name: spotbugs-report
+          name: spotbugs-assets
       - uses: actions/download-artifact@v4
         with:
-          name: dependency-reports
+          name: dependency-assets
 
       - name: SonarQube Analysis
         run: |
           mvn sonar:sonar \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
             -Dsonar.login=${{ env.SONAR_TOKEN }} \
-            -Dsonar.projectKey=demo-app \
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }} \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.java.spotbugs.reportPaths=target/spotbugsXml.xml \
