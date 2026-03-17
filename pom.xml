@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.3</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <version>3.2.4</version> <relativePath/>
   </parent>
 
   <groupId>com.example</groupId>
@@ -18,25 +16,23 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>war</packaging>
 
-  <name>demo</name>
-  <description>Demo project for Spring Boot</description>
-
   <properties>
     <java.version>17</java.version>
+    <jacoco.version>0.8.11</jacoco.version>
+    <spotbugs.version>4.8.3.1</spotbugs.version>
+    <dependency-check.version>12.1.0</dependency-check.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webmvc</artifactId>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-tomcat</artifactId>
       <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -44,32 +40,26 @@
     </dependency>
   </dependencies>
 
-  <!-- ==================== Build Section with DevSecOps Plugins ==================== -->
   <build>
     <plugins>
-
-      <!-- Spring Boot Maven Plugin -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
-      <!-- JaCoCo: code coverage -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.14</version>
+        <version>${jacoco.version}</version>
         <executions>
-          <!-- Prepare agent before tests -->
           <execution>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
           </execution>
-          <!-- Generate report after tests -->
           <execution>
             <id>report</id>
-            <phase>verify</phase>
+            <phase>test</phase>
             <goals>
               <goal>report</goal>
             </goals>
@@ -77,111 +67,48 @@
         </executions>
       </plugin>
 
-      
-
-      <!-- Checkstyle: static code style check -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.3.0</version>
-        <executions>
-          <execution>
-            <id>checkstyle</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>checkstyle</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <outputFile>target/checkstyle-result.xml</outputFile>
-          <outputFileFormat>xml</outputFileFormat>
-        </configuration>
-      </plugin>
-
-      <!-- PMD: static code analysis + CPD -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-        <version>3.21.0</version>
-        <executions>
-          <execution>
-            <id>pmd</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>pmd</goal>
-              <goal>cpd-check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <targetJdk>17</targetJdk>
-          <linkXRef>false</linkXRef>
-        </configuration>
-      </plugin>
-
-      <!-- SpotBugs: static analysis for bugs -->
       <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
-        <version>4.9.8.2</version>
-        <executions>
-          <execution>
-            <id>spotbugs</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>spotbugs</goal>
-            </goals>
-          </execution>
-        </executions>
+        <version>${spotbugs.version}</version>
         <configuration>
           <xmlOutput>true</xmlOutput>
+          <effort>Max</effort>
+          <threshold>Low</threshold>
           <failOnError>false</failOnError>
+          <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
         </configuration>
-      </plugin>
-
-      <!-- Maven Surefire Report Plugin (Optional HTML for JUnit) -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>3.0.0-M9</version>
         <executions>
           <execution>
-            <id>surefire-html-report</id>
             <phase>verify</phase>
             <goals>
-              <goal>report</goal>
+              <goal>check</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
 
-      <!-- OWASP Dependency Check -->
-      <!-- <plugin>
-				<groupId>org.owasp</groupId>
-				<artifactId>dependency-check-maven</artifactId>
-				<version>${dependency-check.plugin.version}</version>
-				<configuration>
-					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
-					<formats>
-						<format>HTML</format>
-						<format>XML</format>
-					</formats>
-					<failBuildOnCVSS>7</failBuildOnCVSS>
-				</configuration>
-				<executions>
-					<execution>
-						<id>dependency-check</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>${dependency-check.version}</version>
+        <configuration>
+          <formats>
+            <format>XML</format>
+            <format>JSON</format>
+            <format>HTML</format>
+          </formats>
+          <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
   </build>
-  <!-- ==================== End Build Section ==================== -->
-
 </project>
