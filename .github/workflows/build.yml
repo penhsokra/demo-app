@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # 1️⃣ BUILD JOB: Compiles code and runs tests
+  # 1. BUILD JOB: Compiles code and prepares artifacts
   build:
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +30,7 @@ jobs:
             target/site/jacoco/jacoco.xml
             pom.xml
 
-  # 2️⃣ JOB: SPOTBUGS (Runs in parallel with Dependency Scan)
+  # 2. SPOTBUGS JOB: Runs in parallel with Dependency Scan
   spotbugs:
     needs: build
     runs-on: ubuntu-latest
@@ -49,7 +49,7 @@ jobs:
           name: spotbugs-report
           path: target/spotbugsXml.xml
 
-  # 3️⃣ JOB: DEPENDENCY CHECK (Runs in parallel with SpotBugs)
+  # 3. DEPENDENCY CHECK JOB: Runs in parallel with SpotBugs
   dependency-check:
     needs: build
     runs-on: ubuntu-latest
@@ -71,7 +71,7 @@ jobs:
             target/dependency-check-report.json
             target/dependency-check-report.html
 
-  # 4️⃣ JOB: SONARQUBE ANALYSIS (Waits for all scans to finish)
+  # 4. SONARQUBE ANALYSIS: Consolidation Job
   sonarqube:
     needs: [build, spotbugs, dependency-check]
     runs-on: ubuntu-latest
@@ -83,7 +83,6 @@ jobs:
         with:
           fetch-depth: 0
       
-      # Download all artifacts for the final scan
       - uses: actions/download-artifact@v4
         with:
           name: build-assets
