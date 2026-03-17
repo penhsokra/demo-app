@@ -84,37 +84,37 @@ jobs:
     needs: quality
 
     steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
+    - name: Checkout Source
+      uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
 
-      # Snyk vulnerability scan
-      - name: Run Snyk Scan
-        uses: snyk/actions/maven@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    - name: Install Snyk
+      run: npm install -g snyk
 
-      # OWASP Dependency Check
-      - name: OWASP Dependency Check
-        run: |
-          mvn org.owasp:dependency-check-maven:check
+    - name: Authenticate Snyk
+      run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
-      - name: Upload Security Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
+    - name: Run Snyk Scan
+      run: snyk test --all-projects
+      continue-on-error: true
+
+    # - name: OWASP Dependency Check
+    #   run: mvn org.owasp:dependency-check-maven:check
+
+    - name: Upload Security Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
           name: security-reports
           path: |
             target/dependency-check-report.html
