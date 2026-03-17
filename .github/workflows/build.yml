@@ -30,6 +30,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: maven
 
       # 3️⃣ Maven Build & Tests (JUnit)
       - name: Maven Build & Tests
@@ -44,7 +45,6 @@ jobs:
           name: junit-reports
           path: |
             target/surefire-reports/*.xml
-            target/failsafe-reports/*.xml
             target/site/surefire-report.html
 
       # 5️⃣ Coverage & Static Analysis
@@ -66,7 +66,6 @@ jobs:
             target/site/checkstyle.html
             target/site/pmd.html
             target/site/spotbugs.html
-            target/site/jacoco/index.html
             target/site/**
 
 
@@ -79,6 +78,8 @@ jobs:
       # 8️⃣ Run Snyk vulnerability scan (JSON + HTML)
       - name: Run Snyk Scan
         run: |
+          mkdir -p ~/.m2 && chmod -R 777 ~/.m2
+
           snyk test --all-projects --json > snyk-report.json || true  
           snyk test --all-projects --html > snyk-report.html || true
 
