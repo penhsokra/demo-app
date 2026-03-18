@@ -95,7 +95,12 @@ jobs:
       # Check for vulnerabilities in XML
       - name: Check for vulnerabilities in XML
         run: grep "<vulnerability>" target/dependency-check-report.xml || echo "No vulnerabilities found"
-
+      - name: Show Dependency-Check CVEs
+        run: |
+          sudo apt-get update && sudo apt-get install -y xmlstarlet
+          xmlstarlet sel -N d="https://jeremylong.github.io/DependencyCheck/dependency-check.4.1.xsd" \
+            -t -m "//d:vulnerability" -v "d:name" -n target/dependency-check-report.xml
+      
       # STEP C: Share Reports (Now includes XML)
       - name: Share Security Reports
         uses: actions/upload-artifact@v4
