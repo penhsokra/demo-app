@@ -88,6 +88,10 @@ jobs:
             -DossindexAnalyzerEnabled=false
         # Note: Ensure NVD_API_KEY is stored in your GitHub Repo Secrets
 
+      # List generated reports
+      - name: List generated reports
+        run: ls -l target/dependency-check-report.*
+
       # STEP C: Share Reports (Now includes XML)
       - name: Share Security Reports
         uses: actions/upload-artifact@v4
