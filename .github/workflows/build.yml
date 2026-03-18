@@ -124,7 +124,5 @@ jobs:
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }} \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-            -Dsonar.dependencyCheck.xmlReportPath=target/dependency-check-report.xml \
-            -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json \
-            -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html \
+            -Dsonar.dependencyCheck.reportPath=target/dependency-check-report.xml \
             -Dsonar.qualitygate.wait=true
