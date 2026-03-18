@@ -60,6 +60,7 @@ jobs:
           path: |
             target/dependency-check-report.json
             target/dependency-check-report.html
+            target/dependency-check-report.xml
 
   # 3. SONARQUBE JOB
   sonarqube-analysis:
@@ -87,6 +88,7 @@ jobs:
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }} \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.dependencyCheck.xmlReportPath=target/dependency-check-report.xml \
             -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json \
             -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html \
             -Dsonar.qualitygate.wait=true
