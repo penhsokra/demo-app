@@ -36,6 +36,7 @@ jobs:
           path: |
             target/classes
             target/site/jacoco/jacoco.xml
+            target/site/**
             pom.xml
 
   # 2. SECURITY JOB (Your OWASP Path)
