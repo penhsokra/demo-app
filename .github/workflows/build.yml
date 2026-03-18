@@ -3,7 +3,6 @@ name: DevSecOps Optimized
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 # GLOBAL ENVIRONMENT VARIABLES (Moved from Secrets)
 env:
@@ -40,20 +39,56 @@ jobs:
             pom.xml
 
   # 2. SECURITY JOB (Your OWASP Path)
+  # security-scans:
+  #   name: Security Scans
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+      
+  #     - name: Run OWASP Dependency Check
+  #       run: |
+  #         mvn org.owasp:dependency-check-maven:check \
+  #           -DnvdApiKey=${{ env.NVD_API_KEY }} \
+  #           -Dformats=JSON,HTML \
+  #           -DossindexAnalyzerEnabled=false
+
+  #     - name: Share Security Reports
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: security-reports
+  #         path: |
+  #           target/dependency-check-report.json
+  #           target/dependency-check-report.html
+  #           target/dependency-check-report.xml
+
+  # 2. SECURITY JOB (Optimized for Speed & SonarQube)
   security-scans:
     name: Security Scans
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
+      # STEP A: Cache the NVD Database to prevent slow downloads
+      - name: Cache Dependency-Check data
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-dep-check-data
+          restore-keys: |
+            ${{ runner.os }}-dep-check-data
+
+      # STEP B: Run scan with XML format and API Key
       - name: Run OWASP Dependency Check
         run: |
           mvn org.owasp:dependency-check-maven:check \
-            -DnvdApiKey=${{ env.NVD_API_KEY }} \
-            -Dformats=JSON,HTML \
+            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+            -Dformats=XML,JSON,HTML \
             -DossindexAnalyzerEnabled=false
+        # Note: Ensure NVD_API_KEY is stored in your GitHub Repo Secrets
 
+      # STEP C: Share Reports (Now includes XML)
       - name: Share Security Reports
         uses: actions/upload-artifact@v4
         with:
