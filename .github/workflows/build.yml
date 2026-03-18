@@ -91,6 +91,10 @@ jobs:
       # List generated reports
       - name: List generated reports
         run: ls -l target/dependency-check-report.*
+      
+      # Check for vulnerabilities in XML
+      - name: Check for vulnerabilities in XML
+        run: grep "<vulnerability>" target/dependency-check-report.xml || echo "No vulnerabilities found"
 
       # STEP C: Share Reports (Now includes XML)
       - name: Share Security Reports
