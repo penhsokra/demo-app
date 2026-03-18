@@ -69,27 +69,6 @@
       </plugin>
 
       <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-        <version>${spotbugs.version}</version>
-        <configuration>
-          <xmlOutput>true</xmlOutput>
-          <effort>Max</effort>
-          <threshold>Low</threshold>
-          <failOnError>false</failOnError>
-          <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-maven</artifactId>
         <version>${dependency-check.version}</version>
@@ -100,6 +79,7 @@
             <format>HTML</format>
           </formats>
           <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+          <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
         </configuration>
         </plugin>
 

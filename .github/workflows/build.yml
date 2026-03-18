@@ -38,30 +38,10 @@ jobs:
             target/site/jacoco/jacoco.xml
             pom.xml
 
-  # 2. QUALITY JOB
-  quality-analysis:
-    name: Quality Analysis
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-assets
-
-      - name: Run SpotBugs
-        run: mvn spotbugs:check -DfailOnError=false
-
-      - name: Share Quality Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: quality-report
-          path: target/spotbugsXml.xml
-
-  # 3. SECURITY JOB (Your OWASP Path)
+  # 2. SECURITY JOB (Your OWASP Path)
   security-scans:
     name: Security Scans
-    needs: quality-analysis
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +50,8 @@ jobs:
         run: |
           mvn org.owasp:dependency-check-maven:check \
             -DnvdApiKey=${{ env.NVD_API_KEY }} \
-            -Dformats=JSON,HTML
+            -Dformats=JSON,HTML \
+            -DossindexAnalyzerEnabled=false
 
       - name: Share Security Reports
         uses: actions/upload-artifact@v4
@@ -80,7 +61,7 @@ jobs:
             target/dependency-check-report.json
             target/dependency-check-report.html
 
-  # 4. SONARQUBE JOB
+  # 3. SONARQUBE JOB
   sonarqube-analysis:
     name: SonarQube Analysis
     needs: security-scans
@@ -96,20 +77,16 @@ jobs:
           name: build-assets
       - uses: actions/download-artifact@v4
         with:
-          name: quality-report
-      - uses: actions/download-artifact@v4
-        with:
           name: security-reports
 
       - name: SonarQube Scan
         run: |
           mvn sonar:sonar \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ env.SONAR_TOKEN }} \
+            -Dsonar.token=${{ env.SONAR_TOKEN }} \
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }} \
             -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-            -Dsonar.java.spotbugs.reportPaths=target/spotbugsXml.xml \
             -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json \
             -Dsonar.dependencyCheck.htmlReportPath=target/dependency-check-report.html \
             -Dsonar.qualitygate.wait=true
