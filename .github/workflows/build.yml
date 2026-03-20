@@ -97,10 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-reports
-          path: |
-            target/dependency-check-report.json
-            target/dependency-check-report.html
-            target/dependency-check-report.xml
+          path: target/dependency-check-report.*
 
   # 3. SONARQUBE JOB
   sonarqube-analysis:
@@ -119,6 +116,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: security-reports
+          path: target
 
       - name: SonarQube Scan
         run: |
@@ -129,4 +127,5 @@ jobs:
             -Dsonar.java.binaries=target/classes \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.dependencyCheck.jsonReportPath=target/dependency-check-report.json \
+            -Dsonar.dependencyCheck.xmlReportPath=target/dependency-check-report.xml \
             -Dsonar.qualitygate.wait=true
